@@ -20,6 +20,9 @@ MAKE_JOBS_SAFE=	yes
 
 USE_PYTHON=	2.4+
 USE_PYDISTUTILS=yes
+PYDISTUTILS_NOEGGINFO=	yes
+PYDISTUTILS_INSTALLARGS+=	--install-data=${WWWDIR} \
+				--install-lib=${WWWDIR}
 
 FETCH_ARGS=	"-pRr"		# default '-AFpr' prevents 302 redirects by launchpad
 
@@ -32,13 +35,8 @@ OPTIONS=	APACHE "Use apache as webserver" on \
 		MODPYTHON3 "Enable mod_python3 support" off \
 		MODWSGI3 "Enable mod_wsgi3 support" on
 
-PYDISTUTILS_NOEGGINFO=	yes
-GRAPHITE_DIR=	graphite
-GRAPHITE_BASE=	${PREFIX}/${GRAPHITE_DIR}
-PLIST_SUB=	GRAPHITE_BASE=${GRAPHITE_DIR}
-PYDISTUTILS_INSTALLARGS+=	--install-data=${GRAPHITE_BASE} \
-				--install-lib=${GRAPHITE_BASE}/lib  \
-				--install-scripts=${GRAPHITE_BASE}/bin
+GRAPHITE_DBDIR?=	"/var/db/graphite"
+GRAPHITE_LOGDIR?=	"/var/log/graphite"
 
 .include <bsd.port.options.mk>
 
@@ -66,6 +64,29 @@ post-patch:
 	${RM} -f ${WRKSRC}/setup.cfg
 	@${REINPLACE_CMD} -e "s|/opt/graphite|${GRAPHITE_BASE}|g" ${WRKSRC}/conf/graphite.wsgi.example
 	@${REINPLACE_CMD} -e "s|/opt/graphite|${GRAPHITE_BASE}|g" ${WRKSRC}/examples/example-graphite-vhost.conf
+	@${ECHO_MSG} "********************************************************************"
+	@${ECHO_MSG} "Please note that this port overrides the default installation layout"
+	@${ECHO_MSG} "for Graphite by modifying settings.py until the software is able to"
+	@${ECHO_MSG} "configure its own layout."
+	@${ECHO_MSG} "********************************************************************"
+
+	@${REINPLACE_CMD} -e "s|^\(GRAPHITE_ROOT = \).*$|\1'${WWWDIR}' + '/'|" ${WRKSRC}/webapp/graphite/settings.py
+	@${REINPLACE_CMD} -e "s|^\(WEBAPP_DIR = \).*$|\1''|" ${WRKSRC}/webapp/graphite/settings.py
+
+	# XXX: REINPLACE THESE TOO!!
+	#GRAPHITE_ROOT  = '${WWWDIR}' + '/'
+	#WEBAPP_DIR     = GRAPHITE_ROOT + 'webapp/'
+	#WEB_DIR        = WEBAPP_DIR + 'graphite/'
+	#CONF_DIR       = '${ETCDIR}' + 'graphite/'
+	#CONTENT_DIR    = WEBAPP_DIR + 'content/'
+	#STORAGE_DIR    = '${GRAPHITE_DBDIR}' + 'graphite/'
+	#WHISPER_DIR    = STORAGE_DIR + 'whisper/'
+	#RRD_DIR        = STORAGE_DIR + 'rrd/'
+	#LISTS_DIR      = STORAGE_DIR + 'lists/'
+	#INDEX_FILE     = STORAGE_DIR + 'index'
+	#WHITELIST_FILE = LISTS_DIR + 'whitelist'
+	#LOG_DIR        = '${GRAPHITE_LOGDIR}' + 'graphite/'
+	#THIRDPARTY_DIR = GRAPHITE_ROOT + 'thirdparty/'
 
 post-install:
 	cd ${GRAPHITE_BASE}/webapp && \
