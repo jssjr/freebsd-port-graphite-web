@@ -29,9 +29,9 @@ FETCH_ARGS=	"-pRr"		# default '-AFpr' prevents 302 redirects by launchpad
 RUN_DEPENDS+=   ${PYTHON_LIBDIR}/site-packages/cairo/__init__.py:${PORTSDIR}/graphics/py-cairo \
                 ${PYTHON_LIBDIR}/site-packages/django/__init__.py:${PORTSDIR}/www/py-django \
 		${PYTHON_LIBDIR}/site-packages/whisper.py:${PORTSDIR}/databases/py-whisper
-#${PYTHON_LIBDIR}/site-packages/carbon/__init__.py:${PORTSDIR}/net-mgmt/py-carbon
 
 OPTIONS=	APACHE "Use apache as webserver" on \
+		CARBON "Build carbon backend " on \
 		MODPYTHON3 "Enable mod_python3 support" off \
 		MODWSGI3 "Enable mod_wsgi3 support" on
 
@@ -39,6 +39,10 @@ GRAPHITE_DBDIR?=	"/var/db/graphite"
 GRAPHITE_LOGDIR?=	"/var/log/graphite"
 
 .include <bsd.port.options.mk>
+
+.if defined (WITH_CARBON)
+RUN_DEPENDS+=	${PYTHON_LIBDIR}/site-packages/carbon/__init__.py:${PORTSDIR}/net-mgmt/py-carbon
+.endif
 
 .if defined (WITH_APACHE)
 USE_APACHE_RUN= 2.0+
