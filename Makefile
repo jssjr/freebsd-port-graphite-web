@@ -86,12 +86,4 @@ post-patch:
 	@${REINPLACE_CMD} -e "s|%%GRAPHITE_DBDIR%%|${GRAPHITE_DBDIR}|g" \
 		-e "s|%%EXAMPLESDIR%%|${EXAMPLESDIR}|g" ${WRKSRC}/setup.py
 
-
-#post-install:
-#	cd ${GRAPHITE_BASE}/webapp && \
-#		${LN} -sf ../lib/graphite
-#	cd ${PREFIX}/bin && \
-#		${LN} -sf ${GRAPHITE_BASE}/bin/run-graphite-devel-server.py
-## XXX Add exec call in plist to match
-
 .include <bsd.port.mk>
