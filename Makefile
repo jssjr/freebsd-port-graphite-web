@@ -26,10 +26,10 @@ PYDISTUTILS_INSTALLARGS+=	--install-data=${WWWDIR} \
 
 FETCH_ARGS=	"-pRr"		# default '-AFpr' prevents 302 redirects by launchpad
 
-RUN_DEPENDS+=   py-cairo:${PORTSDIR}/graphics/py-cairo \
-		py-django:${PORTSDIR}/www/py-django \
-		py-whisper:${PORTSDIR}/databases/py-whisper \
-		py-carbon:${PORTSDIR}/net-mgmt/py-carbon
+RUN_DEPENDS+=   ${PYTHON_LIBDIR}/site-packages/cairo/__init__.py:${PORTSDIR}/graphics/py-cairo \
+                ${PYTHON_LIBDIR}/site-packages/django/__init__.py:${PORTSDIR}/www/py-django \
+		${PYTHON_LIBDIR}/site-packages/whisper.py:${PORTSDIR}/databases/py-whisper
+#${PYTHON_LIBDIR}/site-packages/carbon/__init__.py:${PORTSDIR}/net-mgmt/py-carbon
 
 OPTIONS=	APACHE "Use apache as webserver" on \
 		MODPYTHON3 "Enable mod_python3 support" off \
@@ -61,7 +61,7 @@ IGNORE=	"mod_wsgi3 needs Apache, please select Apache"
 .endif
 
 post-patch:
-	${RM} -f ${WRKSRC}/setup.cfg
+	@${RM} -f ${WRKSRC}/setup.cfg
 	@${REINPLACE_CMD} -e "s|/opt/graphite|${GRAPHITE_BASE}|g" ${WRKSRC}/conf/graphite.wsgi.example
 	@${REINPLACE_CMD} -e "s|/opt/graphite|${GRAPHITE_BASE}|g" ${WRKSRC}/examples/example-graphite-vhost.conf
 	@${ECHO_MSG} "********************************************************************"
@@ -70,29 +70,24 @@ post-patch:
 	@${ECHO_MSG} "configure its own layout."
 	@${ECHO_MSG} "********************************************************************"
 
-	@${REINPLACE_CMD} -e "s|^\(GRAPHITE_ROOT = \).*$|\1'${WWWDIR}' + '/'|" ${WRKSRC}/webapp/graphite/settings.py
-	@${REINPLACE_CMD} -e "s|^\(WEBAPP_DIR = \).*$|\1''|" ${WRKSRC}/webapp/graphite/settings.py
+	@${REINPLACE_CMD} -e "s|^\(GRAPHITE_ROOT = \).*|\1'${WWWDIR}/'|" \
+		-e "s|^\(WEBAPP_DIR = \).*|\1GRAPHITE_ROOT + 'webapp/'|" \
+		-e "s|^\(WEB_DIR = \).*|\1WEBAPP_DIR + 'graphite/'|" \
+		-e "s|^\(CONF_DIR = \).*|\1'${ETCDIR}/graphite/'|" \
+		-e "s|^\(CONTENT_DIR = \).*|\1WEBAPP_DIR + 'content/'|" \
+		-e "s|^\(STORAGE_DIR = \).*|\1'${GRAPHITE_DBDIR}/graphite/'|" \
+		-e "s|^\(LOG_DIR = \).*|\1'${GRAPHITE_LOGDIR}/graphite/'|" \
+		-e "s|^\(THIRDPARTY_DIR = \).*|\1GRAPHITE_ROOT + 'thirdparty/'|" ${WRKSRC}/webapp/graphite/settings.py
+	
+	@${REINPLACE_CMD} -e "s|%%GRAPHITE_DBDIR%%|${GRAPHITE_DBDIR}|g" \
+		-e "s|%%EXAMPLESDIR%%|${EXAMPLESDIR}|g" ${WRKSRC}/setup.py
 
-	# XXX: REINPLACE THESE TOO!!
-	#GRAPHITE_ROOT  = '${WWWDIR}' + '/'
-	#WEBAPP_DIR     = GRAPHITE_ROOT + 'webapp/'
-	#WEB_DIR        = WEBAPP_DIR + 'graphite/'
-	#CONF_DIR       = '${ETCDIR}' + 'graphite/'
-	#CONTENT_DIR    = WEBAPP_DIR + 'content/'
-	#STORAGE_DIR    = '${GRAPHITE_DBDIR}' + 'graphite/'
-	#WHISPER_DIR    = STORAGE_DIR + 'whisper/'
-	#RRD_DIR        = STORAGE_DIR + 'rrd/'
-	#LISTS_DIR      = STORAGE_DIR + 'lists/'
-	#INDEX_FILE     = STORAGE_DIR + 'index'
-	#WHITELIST_FILE = LISTS_DIR + 'whitelist'
-	#LOG_DIR        = '${GRAPHITE_LOGDIR}' + 'graphite/'
-	#THIRDPARTY_DIR = GRAPHITE_ROOT + 'thirdparty/'
 
-post-install:
-	cd ${GRAPHITE_BASE}/webapp && \
-		${LN} -sf ../lib/graphite
-	cd ${PREFIX}/bin && \
-		${LN} -sf ${GRAPHITE_BASE}/bin/run-graphite-devel-server.py
-# XXX Add exec call in plist to match
+#post-install:
+#	cd ${GRAPHITE_BASE}/webapp && \
+#		${LN} -sf ../lib/graphite
+#	cd ${PREFIX}/bin && \
+#		${LN} -sf ${GRAPHITE_BASE}/bin/run-graphite-devel-server.py
+## XXX Add exec call in plist to match
 
 .include <bsd.port.mk>
