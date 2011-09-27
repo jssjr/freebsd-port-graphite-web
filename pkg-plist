@@ -634,6 +634,7 @@
 %%WWWDIR%%/webapp/content/js/window/prototype.js
 %%WWWDIR%%/webapp/content/js/window/window.js
 %%WWWDIR%%/webapp/content/js/window/window_effects.js
+bin/run-graphite-devel-server.py
 @dirrm %%WWWDIR%%/webapp/content/js/window
 @dirrm %%WWWDIR%%/webapp/content/js/scriptaculous
 @dirrm %%WWWDIR%%/webapp/content/js/ext/resources/images/default/window
