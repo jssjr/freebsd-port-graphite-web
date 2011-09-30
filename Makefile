@@ -33,7 +33,9 @@ RUN_DEPENDS+=   ${PYTHON_LIBDIR}/site-packages/cairo/__init__.py:${PORTSDIR}/gra
 OPTIONS=	APACHE "Use apache as webserver" on \
 		CARBON "Build carbon backend " on \
 		MODPYTHON3 "Enable mod_python3 support" off \
-		MODWSGI3 "Enable mod_wsgi3 support" on
+		MODWSGI3 "Enable mod_wsgi3 support" on \
+		SQLITE3 "Enable sqlite3 support" on \
+		MYSQL "Enable MySQL support" off
 
 GRAPHITE_DBDIR?=	"/var/db/graphite"
 GRAPHITE_LOGDIR?=	"/var/log/graphite"
@@ -56,6 +58,10 @@ RUN_DEPENDS+=   ${LOCALBASE}/${APACHEMODDIR}/mod_python.so:${PORTSDIR}/www/mod_p
 RUN_DEPENDS+=   ${LOCALBASE}/${APACHEMODDIR}/mod_wsgi.so:${PORTSDIR}/www/mod_wsgi3
 .endif
 
+.if defined(WITH_MYSQL)
+RUN_DEPENDS+=   ${PYTHON_PKGNAMEPREFIX}MySQLdb>=1.2.2:${PORTSDIR}/databases/py-MySQLdb
+.endif
+
 .if defined(WITH_MODPYTHON3) && !defined(WITH_APACHE)
 IGNORE=	"mod_python3 needs Apache, please select Apache"
 .endif
@@ -76,11 +82,11 @@ post-patch:
 
 	@${REINPLACE_CMD} -e "s|^\(GRAPHITE_ROOT = \).*|\1'${WWWDIR}/'|" \
 		-e "s|^\(WEBAPP_DIR = \).*|\1GRAPHITE_ROOT + 'webapp/'|" \
-		-e "s|^\(WEB_DIR = \).*|\1WEBAPP_DIR + 'graphite/'|" \
+		-e "s|^\(WEB_DIR = \).*|\1GRAPHITE_ROOT + 'graphite/'|" \
 		-e "s|^\(CONF_DIR = \).*|\1'${ETCDIR}/graphite/'|" \
 		-e "s|^\(CONTENT_DIR = \).*|\1WEBAPP_DIR + 'content/'|" \
 		-e "s|^\(STORAGE_DIR = \).*|\1'${GRAPHITE_DBDIR}/graphite/'|" \
-		-e "s|^\(LOG_DIR = \).*|\1'${GRAPHITE_LOGDIR}/graphite/'|" \
+		-e "s|^\(LOG_DIR = \).*|\1'${GRAPHITE_LOGDIR}/'|" \
 		-e "s|^\(THIRDPARTY_DIR = \).*|\1GRAPHITE_ROOT + 'thirdparty/'|" ${WRKSRC}/webapp/graphite/settings.py
 	
 	@${REINPLACE_CMD} -e "s|%%GRAPHITE_DBDIR%%|${GRAPHITE_DBDIR}|g" \
